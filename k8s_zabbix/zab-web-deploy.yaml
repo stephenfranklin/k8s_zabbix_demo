@@ -1,0 +1,107 @@
+## from https://github.com/zabbix/zabbix-docker/blob/4.4/kubernetes.yaml
+kind: Service
+apiVersion: v1
+metadata:
+  name: zabbix-web
+  labels:
+    app: zabbix
+  namespace: monitoring-zabbix
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+    protocol: TCP
+    nodePort: 30080
+    targetPort: 8080
+    name: web-http
+  - port: 443
+    targetPort: 8443
+    name: web-https
+  selector:
+    app: zabbix-web
+  #externalIPs:
+  #- <Specify external IP here>
+---
+kind: Deployment
+apiVersion: v1
+metadata:
+  name: zabbix-web
+  labels:
+    app: zabbix
+  namespace: zabbix
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        name: zabbix-web
+        app: zabbix
+        tier: web
+    spec:
+      containers:
+        - image: zabbix/zabbix-web-nginx-mysql
+          name: zabbix-web
+          imagePullPolicy: IfNotPresent
+          ports:
+          - containerPort: 8080
+            name: web-http
+            protocol: TCP
+          - containerPort: 8443
+            name: web-https
+          resources:
+           limits:
+            cpu: 200m
+            memory: 400Mi
+           #requests:
+           # cpu: 200m
+           # memory: 400Mi
+          livenessProbe:
+            httpGet:
+              path: /
+              port: web-http
+              scheme: HTTP
+            initialDelaySeconds: 15
+            timeoutSeconds: 2
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /
+              port: web-http
+              scheme: HTTP
+            initialDelaySeconds: 15
+            timeoutSeconds: 2
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 5
+          env:
+          - name: ZBX_SERVER_NAME
+            value: "Zabbix Web"
+          #- name: PHP_TZ
+          #  value: "Europe/Riga"
+          - name: MYSQL_USER
+            valueFrom:
+             secretKeyRef:
+              name: db-secret
+              key: db-zbx-user
+          - name: MYSQL_PASSWORD
+            valueFrom:
+             secretKeyRef:
+              name: db-secret
+              key: db-zbx-pass
+          - name: MYSQL_ROOT_PASSWORD
+            valueFrom:
+             secretKeyRef:
+              name: db-secret
+              key: db-root-pass
+          - name: MYSQL_DATABASE
+            value: "zabbix"
+          volumeMounts:
+          - name: zabbix-web-ssl
+            mountPath: /etc/ssl/nginx
+            readOnly: true
+      volumes:
+       - hostPath:
+          path: /home/dotneft/zbx/zbx_env/etc/ssl/nginx/
+         name: zabbix-web-ssl

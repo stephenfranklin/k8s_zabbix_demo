@@ -1,0 +1,30 @@
+## modified from https://github.com/zabbix/zabbix-docker/blob/4.4/kubernetes.yaml
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: zabbix-mysql-data
+  labels:
+    type: local
+  namespace: monitoring-zabbix
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/data"
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: zabbix-mysql-data-claim
+  namespace: monitoring-zabbix
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  volumeName: zabbix-mysql-data

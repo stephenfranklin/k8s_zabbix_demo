@@ -1,0 +1,74 @@
+## modified from https://github.com/zabbix/zabbix-docker/blob/4.4/kubernetes.yaml
+kind: Service
+apiVersion: v1
+metadata:
+  name: zab-mysql
+  labels:
+    app: zabbix
+    tier: mysql
+  namespace: monitoring-zabbix
+spec:
+  type: NodePort
+  ports:
+  - port: 3306
+    nodePort: 30006
+    protocol: TCP
+    targetPort: 3306
+    name: zab-mysql
+  selector:
+    name: zab-mysql
+---
+kind: Deployment
+apiVersion: v1
+metadata:
+  name: zab-mysql
+  labels:
+    app: zabbix
+  namespace: monitoring-zabbix
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zabbix
+      tier: mysql
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        name: zab-mysql
+        app: zabbix
+        tier: mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql
+          env:
+          - name: MYSQL_USER
+            valueFrom:
+             secretKeyRef:
+              name: db-secret
+              key: db-zbx-user
+          - name: MYSQL_PASSWORD
+            valueFrom:
+             secretKeyRef:
+              name: db-secret
+              key: db-zbx-pass
+          - name: MYSQL_ROOT_PASSWORD
+            valueFrom:
+             secretKeyRef:
+              name: db-secret
+              key: db-root-pass
+          - name: MYSQL_DATABASE
+            value: "zabbix"
+          ports:
+          - containerPort: 3306
+            name: mysql
+          volumeMounts:
+           - mountPath: "/var/lib/mysql/"
+             name: zabbix-mysql-data
+             readOnly: false
+      volumes:
+       - name: zabbix-mysql-data
+         persistentVolumeClaim:
+          claimName: zabbix-mysql-data-claim
