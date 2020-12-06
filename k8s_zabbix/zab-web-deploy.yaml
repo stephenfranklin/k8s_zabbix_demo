@@ -4,7 +4,8 @@ apiVersion: v1
 metadata:
   name: zabbix-web
   labels:
-    app: zabbix
+    app: zab-web
+    tier: web
   namespace: monitoring-zabbix
 spec:
   type: NodePort
@@ -18,7 +19,8 @@ spec:
     targetPort: 8443
     name: web-https
   selector:
-    app: zabbix-web
+    app: zab-web
+    tier: web
   #externalIPs:
   #- <Specify external IP here>
 ---
@@ -27,15 +29,21 @@ apiVersion: apps/v1
 metadata:
   name: zabbix-web
   labels:
-    app: zabbix
-  namespace: zabbix
+    app: zab-web
+    tier: web
+  namespace: monitoring-zabbix
 spec:
-  replicas: 2
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zab-web
+      tier: web
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:
-        name: zabbix-web
-        app: zabbix
+        app: zab-web
         tier: web
     spec:
       containers:
@@ -77,7 +85,7 @@ spec:
             failureThreshold: 5
           env:
           - name: ZBX_SERVER_NAME
-            value: "Zabbix Web"
+            value: "Zabbix_Web_UI"
           #- name: PHP_TZ
           #  value: "Europe/Riga"
           - name: MYSQL_USER

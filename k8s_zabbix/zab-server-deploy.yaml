@@ -5,12 +5,13 @@ metadata:
   name: zabbix-server
   labels:
     app: zabbix
-  namespace: zabbix
+    tier: server
+  namespace: monitoring-zabbix
 spec:
   type: NodePort
   ports:
   - port: 10051
-    nodePort: 30051
+    #nodePort: 30051
     protocol: TCP
     targetPort: 10051
     name: zabbix-trapper
@@ -30,17 +31,18 @@ metadata:
   labels:
     app: zabbix
     tier: server
-  namespace: zabbix
+  namespace: monitoring-zabbix
 spec:
   replicas: 1
-  matchLabels:
-    app: zabbix
-    tier: server
+  selector:
+    matchLabels:
+      app: zabbix
+      tier: server
   template:
     metadata:
       labels:
-        name: zabbix-server
         app: zabbix
+        tier: server
     spec:
       containers:
         - name: zabbix-server
@@ -63,19 +65,19 @@ spec:
           env:
           - name: MYSQL_USER
             valueFrom:
-             secretKeyRef:
-              name: db-secret
-              key: db-zbx-user
+              secretKeyRef:
+                name: db-secret
+                key: db-zbx-user
           - name: MYSQL_PASSWORD
             valueFrom:
-             secretKeyRef:
-              name: db-secret
-              key: db-zbx-pass
+              secretKeyRef:
+                name: db-secret
+                key: db-zbx-pass
           - name: MYSQL_ROOT_PASSWORD
             valueFrom:
-             secretKeyRef:
-              name: db-secret
-              key: db-root-pass
+              secretKeyRef:
+                name: db-secret
+                key: db-root-pass
           - name: MYSQL_DATABASE
             value: "zabbix"
           - name: ZBX_JAVAGATEWAY_ENABLE
@@ -103,7 +105,7 @@ spec:
           - name: zabbix-db-storage
             mountPath: /var/lib/zabbix/snmptraps/
             readOnly: false
-        -name: zabbix-agent
+        - name: zabbix-agent
           image: zabbix/zabbix-agent
           imagePullPolicy: Always
           ports:
