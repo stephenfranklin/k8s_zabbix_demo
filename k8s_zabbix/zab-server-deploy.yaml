@@ -23,8 +23,8 @@ spec:
   #externalIPs:
   #- <Specify external IP here>
 ---
-kind: ReplicationController
-apiVersion: v1
+kind: Deployment
+apiVersion: apps/v1
 metadata:
   name: zabbix-server
   labels:

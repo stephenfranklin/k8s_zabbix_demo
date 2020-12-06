@@ -23,7 +23,7 @@ spec:
   #- <Specify external IP here>
 ---
 kind: Deployment
-apiVersion: v1
+apiVersion: apps/v1
 metadata:
   name: zabbix-web
   labels:
